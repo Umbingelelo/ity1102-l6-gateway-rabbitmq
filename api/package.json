@@ -1,0 +1,9 @@
+{
+  "name": "l6-api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "amqplib": "0.10.9",
+    "redis": "4.7.1"
+  }
+}

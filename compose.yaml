@@ -1,0 +1,61 @@
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - catalogo
+      - ventas
+    restart: unless-stopped
+  catalogo:
+    build: ./catalogo
+    restart: unless-stopped
+  ventas:
+    build: ./ventas
+    restart: unless-stopped
+  api:
+    build: ./api
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq
+      REDIS_URL: redis://redis:6379
+    restart: unless-stopped
+  worker:
+    build: ./worker
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      REDIS_HOST: redis
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - cola:/var/lib/rabbitmq
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    volumes:
+      - estados:/data
+    restart: unless-stopped
+volumes:
+  cola:
+  estados:
